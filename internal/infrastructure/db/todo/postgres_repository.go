@@ -46,19 +46,3 @@ func (r *PostgresRepository) List(ctx context.Context) ([]domaintodo.Todo, error
 
 	return todos, nil
 }
-
-// Create inserts a new todo with the provided title.
-func (r *PostgresRepository) Create(ctx context.Context, title string) (domaintodo.Todo, error) {
-	const query = `
-        INSERT INTO todos (title)
-        VALUES ($1)
-        RETURNING id, title, completed, created_at
-    `
-
-	var t domaintodo.Todo
-	if err := r.db.QueryRowContext(ctx, query, title).Scan(&t.ID, &t.Title, &t.Completed, &t.CreatedAt); err != nil {
-		return domaintodo.Todo{}, fmt.Errorf("insert todo: %w", err)
-	}
-
-	return t, nil
-}

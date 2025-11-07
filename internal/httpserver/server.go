@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"time"
 
+	httpSwagger "github.com/swaggo/http-swagger"
+
 	httpadtodo "go-todo-app/internal/adapter/http/todo"
 	"go-todo-app/internal/httpx"
 	infratodo "go-todo-app/internal/infrastructure/db/todo"
@@ -29,6 +31,7 @@ func New(addr string, db *sql.DB) *Server {
 	todoService := usecasetodo.NewService(todoRepo)
 	todoHandler := httpadtodo.NewHandler(todoService)
 	mux.Handle("/todos", todoHandler)
+	mux.Handle("/swagger/", httpSwagger.WrapHandler)
 
 	srv := &http.Server{
 		Addr:         addr,

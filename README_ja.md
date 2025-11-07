@@ -22,21 +22,6 @@ docker compose up --build
 
 `CTRL+C` で停止し、ローカル DB データも削除したい場合は `docker compose down -v` を実行してください。
 
-### サンプルリクエスト
-
-```bash
-# ヘルスチェック
-curl http://localhost:8080/healthz
-
-# Todo の作成
-curl -X POST http://localhost:8080/todos \
-  -H 'Content-Type: application/json' \
-  -d '{"title":"Learn Go with Docker"}'
-
-# Todo の一覧取得
-curl http://localhost:8080/todos
-```
-
 ## ディレクトリ構成
 
 - `cmd/server/`: アプリのエントリーポイント。設定読み込み、DB 接続、HTTP サーバ起動を担当

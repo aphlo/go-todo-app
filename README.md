@@ -25,21 +25,6 @@ docker compose up --build
 
 Stop the stack with `CTRL+C`. Use `docker compose down -v` when you also want to wipe local database files.
 
-### Example requests
-
-```bash
-# Health check
-curl http://localhost:8080/healthz
-
-# Create a todo
-curl -X POST http://localhost:8080/todos \
-  -H 'Content-Type: application/json' \
-  -d '{"title":"Learn Go with Docker"}'
-
-# List todos
-curl http://localhost:8080/todos
-```
-
 ## Project layout
 
 - `cmd/server/`: program entrypoint (wires config, DB, HTTP server)
