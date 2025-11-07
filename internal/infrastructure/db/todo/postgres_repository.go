@@ -4,20 +4,22 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+
+	domaintodo "go-todo-app/internal/domain/todo"
 )
 
-// Repository provides DB access for todo entities.
-type Repository struct {
+// PostgresRepository persists todos in a Postgres database.
+type PostgresRepository struct {
 	db *sql.DB
 }
 
-// NewRepository constructs a Repository.
-func NewRepository(db *sql.DB) *Repository {
-	return &Repository{db: db}
+// NewPostgresRepository returns a Repository backed by Postgres.
+func NewPostgresRepository(db *sql.DB) *PostgresRepository {
+	return &PostgresRepository{db: db}
 }
 
 // List returns all todos ordered by creation time (newest first).
-func (r *Repository) List(ctx context.Context) ([]Todo, error) {
+func (r *PostgresRepository) List(ctx context.Context) ([]domaintodo.Todo, error) {
 	const query = `
         SELECT id, title, completed, created_at
         FROM todos
@@ -30,9 +32,9 @@ func (r *Repository) List(ctx context.Context) ([]Todo, error) {
 	}
 	defer rows.Close()
 
-	var todos []Todo
+	var todos []domaintodo.Todo
 	for rows.Next() {
-		var t Todo
+		var t domaintodo.Todo
 		if err := rows.Scan(&t.ID, &t.Title, &t.Completed, &t.CreatedAt); err != nil {
 			return nil, fmt.Errorf("scan todo: %w", err)
 		}
@@ -46,16 +48,16 @@ func (r *Repository) List(ctx context.Context) ([]Todo, error) {
 }
 
 // Create inserts a new todo with the provided title.
-func (r *Repository) Create(ctx context.Context, title string) (Todo, error) {
+func (r *PostgresRepository) Create(ctx context.Context, title string) (domaintodo.Todo, error) {
 	const query = `
         INSERT INTO todos (title)
         VALUES ($1)
         RETURNING id, title, completed, created_at
     `
 
-	var t Todo
+	var t domaintodo.Todo
 	if err := r.db.QueryRowContext(ctx, query, title).Scan(&t.ID, &t.Title, &t.Completed, &t.CreatedAt); err != nil {
-		return Todo{}, fmt.Errorf("insert todo: %w", err)
+		return domaintodo.Todo{}, fmt.Errorf("insert todo: %w", err)
 	}
 
 	return t, nil

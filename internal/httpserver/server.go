@@ -8,8 +8,10 @@ import (
 	"net/http"
 	"time"
 
+	httpadtodo "go-todo-app/internal/adapter/http/todo"
 	"go-todo-app/internal/httpx"
-	"go-todo-app/internal/todo"
+	infratodo "go-todo-app/internal/infrastructure/db/todo"
+	usecasetodo "go-todo-app/internal/usecase/todo"
 )
 
 // Server wraps the http.Server with app specific handlers and helpers.
@@ -23,8 +25,9 @@ func New(addr string, db *sql.DB) *Server {
 
 	mux.HandleFunc("/healthz", healthHandler(db))
 
-	todoRepo := todo.NewRepository(db)
-	todoHandler := todo.NewHandler(todoRepo)
+	todoRepo := infratodo.NewPostgresRepository(db)
+	todoService := usecasetodo.NewService(todoRepo)
+	todoHandler := httpadtodo.NewHandler(todoService)
 	mux.Handle("/todos", todoHandler)
 
 	srv := &http.Server{

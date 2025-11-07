@@ -3,21 +3,29 @@ package todo
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
-	"strings"
 	"time"
 
+	domaintodo "go-todo-app/internal/domain/todo"
 	"go-todo-app/internal/httpx"
+	usecasetodo "go-todo-app/internal/usecase/todo"
 )
+
+// Service exposes the todo use cases consumed by the HTTP handler.
+type Service interface {
+	ListTodos(ctx context.Context) ([]domaintodo.Todo, error)
+	CreateTodo(ctx context.Context, title string) (domaintodo.Todo, error)
+}
 
 // Handler routes todo related HTTP requests.
 type Handler struct {
-	repo *Repository
+	service Service
 }
 
 // NewHandler returns an http.Handler for todo routes.
-func NewHandler(repo *Repository) http.Handler {
-	return &Handler{repo: repo}
+func NewHandler(service Service) http.Handler {
+	return &Handler{service: service}
 }
 
 // ServeHTTP muxes GET/POST on /todos.
@@ -36,7 +44,7 @@ func (h *Handler) listTodos(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
 	defer cancel()
 
-	todos, err := h.repo.List(ctx)
+	todos, err := h.service.ListTodos(ctx)
 	if err != nil {
 		httpx.WriteError(w, http.StatusInternalServerError, "failed to list todos")
 		return
@@ -60,13 +68,12 @@ func (h *Handler) createTodo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if strings.TrimSpace(payload.Title) == "" {
-		httpx.WriteError(w, http.StatusBadRequest, "title is required")
-		return
-	}
-
-	todo, err := h.repo.Create(ctx, strings.TrimSpace(payload.Title))
+	todo, err := h.service.CreateTodo(ctx, payload.Title)
 	if err != nil {
+		if errors.Is(err, usecasetodo.ErrTitleRequired) {
+			httpx.WriteError(w, http.StatusBadRequest, "title is required")
+			return
+		}
 		httpx.WriteError(w, http.StatusInternalServerError, "failed to create todo")
 		return
 	}
